@@ -1,0 +1,138 @@
+# Modules:
+import random as r
+import math as m
+
+#Variables/Lists/Dictionaries:
+TILES = ['E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'A', 'I', 'A', 'I', 'A', 'I', 'A', 'I', 'A', 'I', 'A', 'I', 'A', 'I', 'A', 'I', 'A', 'I', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'N', 'R', 'T', 'N', 'R', 'T', 'N', 'R', 'T', 'N', 'R', 'T', 'N', 'R', 'T', 'N', 'R', 'T', 'L', 'S', 'U', 'L', 'S', 'U', 'L', 'S', 'U', 'L', 'S', 'U', 'D', 'D', 'D', 'D', 'G', 'G', 'G', 'B', 'C', 'M', 'P', 'B', 'C', 'M', 'P', 'F', 'H', 'V', 'W', 'Y', 'F', 'H', 'V', 'W', 'Y', 'K', 'J', 'X', 'Q', 'Z']
+
+tile_to_points = {'E': 1, 'A': 1, 'I': 1, 'O': 1, 'N': 1, 'R': 1, 'T': 1, 'L': 1, 'S': 1, 'U': 1, 'D': 2, 'G': 2, 'B': 3, 'C': 3, 'M': 3, 'P': 3, 'F': 4, 'H': 4, 'V': 4, 'W': 4, 'Y': 4, 'K': 5, 'J': 8, 'X': 8, 'Q': 10, 'Z': 10}
+
+valid_words = []
+with open('Collins Scrabble Words (2019).txt') as a:
+    for line in a.readlines():
+        valid_words.append(line[0:-1])
+
+##Functions##
+#Gameplay Functions#
+def int_input(prompt):
+    answer_int = "Lorem Ipsum"
+    while not answer_int.isdigit():
+        answer_int = input(prompt)
+        if not answer_int.isdigit():
+            print("Invalid input! Print an integer!")
+    return answer_int
+
+def str_input(prompt):
+    answer_str = 12345
+    while not answer_str.isalpha():
+        answer_str = input(prompt)
+        if not answer_str.isalpha():
+            print("Invalid input! Print letters!")
+    return answer_str
+
+def get_new_tiles(num):
+    tiles = r.sample(TILES, num)
+    for tile in tiles:
+        TILES.pop(TILES.index(tile))
+    return tiles
+
+def print_hand(hand):
+    HAND = {}
+    for tile in hand:
+        HAND[tile] = tile_to_points.get(tile)
+    return HAND
+
+def get_points(word):
+    points = 0
+    for char in word:
+        points += tile_to_points.get(char)
+    return points
+
+def is_valid_play(word, hand):
+    answer = ""
+    if word not in valid_words:
+        answer = False
+    else:
+        for char in word:
+            if char not in hand:
+                answer = False
+    if answer != False:
+        answer = True
+    return answer
+
+#Game Statistic Functions#
+
+def get_best_word(words_played):
+    pointers = 0
+    pointess = []
+    best_word = ""
+    for word in words_played:
+        pointers = 0
+        for char in word:
+            pointers += tile_to_points.get(char)
+        pointess.append(pointers)
+    best_word = words_played[pointess.index(max(pointess))]
+    return best_word
+
+##Game Code
+num_players = int(input("Number of players: "))
+player_to_words = {}
+player_to_points = {}
+player_to_hand = {}
+
+for i in range(1, num_players + 1):
+    name = str(input("Enter name of player {}: ".format(i)))
+    player_to_words[name] = []
+    player_to_points[name] = 0
+    player_to_hand[name] = get_new_tiles(7)
+
+choice = 0
+
+# MAIN LOOP
+while len(TILES) > 0 and choice <= 1:
+    print("---- NEW ROUND ----")
+    for player in player_to_words:
+        print("-- {}'s TURN --".format(player))
+        print(print_hand(player_to_hand[player]))
+        print("Options for your turn:")
+        print("0 - pick new tiles")
+        print("1 - play word")
+        print("Any other number - STOP GAME")
+        choice = int(input("Enter a number to select: "))
+        if choice == 0:
+            TILES.extend(player_to_hand[player])
+            player_to_hand[player] = get_new_tiles(7)
+            print(print_hand(player_to_hand[player]))
+            print("END OF TURN")
+        elif choice == 1:
+            word = str(input("Enter the word to play: "))
+            if not is_valid_play(word, player_to_hand[player]):
+                print("INVALID GUESS - TURN SKIPPED")
+            else:
+                player_to_words[player].append(word)
+                points = get_points(word)
+                print("Your word earned", points, "points!")
+                player_to_points[player] += points
+                for char in word:
+                    player_to_hand[player].remove(char)
+                player_to_hand[player].extend(get_new_tiles(len(word)))
+                print("UPDATED HAND:", end = "  ")
+                print(print_hand(player_to_hand[player]))
+        else:
+            print("STOPPING GAME...")
+            break
+print("GAME OVER - GENERATING GAME STATS")
+playerer = []
+for points in player_to_points.values():
+    playerer.append(points)
+winner = playerer.index(max(playerer)) + 1
+print("The winner is Player", winner)
+woradas = []
+for word in player_to_words.values():
+    for wor in word:
+        woradas.append(wor)
+wordie = []
+for worada in woradas:
+    wordie.append(get_points(worada))
+best_word = woradas[wordie.index(max(wordie))]
+print("The best word played was", best_word)
